@@ -3,11 +3,15 @@ module github.com/k8snetworkplumbingwg/sriov-cni
 go 1.13
 
 require (
+	github.com/Masterminds/semver v1.5.0
 	github.com/containernetworking/cni v0.8.1
 	github.com/containernetworking/plugins v0.8.7
 	github.com/onsi/ginkgo v1.2.1-0.20151202141238-7f8ab55aaf3b
 	github.com/onsi/gomega v0.0.0-20151007035656-2152b45fa28a
 	github.com/stretchr/testify v1.4.0
 	github.com/vishvananda/netlink v1.0.1-0.20190924205540-07ace697bea4
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
+	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/sys v0.0.0-20210510120138-977fb7262007 // indirect
+	golang.org/x/tools v0.1.3 // indirect
 )
