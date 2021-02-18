@@ -280,7 +280,6 @@ func ValidateVlanTrunkValue(vlanTrunk string) error {
 
 //GetVlanTrunkRange creates VlanTrunkRangeData from vlanTrunkString
 func GetVlanTrunkRange(vlanTrunkString string) (types.VlanTrunkRangeData, error) {
-
 	var vlanRange = []types.VlanTrunkRange{}
 	trunkingRanges := strings.Split(vlanTrunkString, ",")
 
@@ -345,4 +344,48 @@ func GetVendorID(deviceID string) (string, error) {
 	vendorCode := strings.Split(string(readVendor), "\n")[0]
 
 	return vendorCode, nil
+}
+
+//GetInfraVlanData returns vlan ranges used by cloud infra-structure
+func GetInfraVlanData() ([]string, []int, error) {
+	type Member struct {
+		Type string `json:"type"`
+		Name string `json:"name"`
+	}
+	type Network struct {
+		Type    string   `json:"type"`
+		Name    string   `json:"name,omitempty"`
+		Members []Member `json:"members,omitempty"`
+		VlanID  int      `json:"vlan_id,omitempty"`
+		Device  string   `json:"device,omitempty"`
+	}
+	type NetworkConfig struct {
+		Networks []Network `json:"network_config"`
+	}
+
+	path := "/etc/os-net-config/config.json"
+	byteValue, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Error reading os-net-config json file %q, %q", path, err)
+	}
+
+	var networkConfig NetworkConfig
+	json.Unmarshal(byteValue, &networkConfig)
+
+	var infraInterfaces []string
+	var infraVlans []int
+	for _, network := range networkConfig.Networks {
+		if network.Name == "infra-bond" {
+			for _, member := range network.Members {
+				if member.Type == "interface" {
+					infraInterfaces = append(infraInterfaces, member.Name)
+				}
+			}
+		}
+		if network.Type == "vlan" && network.Device == "infra-bond" {
+			infraVlans = append(infraVlans, network.VlanID)
+		}
+	}
+
+	return infraInterfaces, infraVlans, nil
 }

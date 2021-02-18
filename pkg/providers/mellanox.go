@@ -66,24 +66,38 @@ func (p *MellanoxTrunkProviderConfig) GetVlanData(vlanRanges *sriovtypes.VlanTru
 
 //EnableVgtPlus writes "add <start_vid> <end_vid>" to trunk file
 func EnableVgtPlus(vlanData []string, pfName string, vfid int) error {
+	trunkFile := fmt.Sprintf(utils.TrunkFileDirectory, pfName, vfid)
 	for _, vlans := range vlanData {
 		addTrunk := "add " + vlans
-		trunkFile := fmt.Sprintf(utils.TrunkFileDirectory, pfName, vfid)
-
 		errwrite := ioutil.WriteFile(trunkFile, []byte(addTrunk), 0644)
 		if errwrite != nil {
 			return fmt.Errorf("f.Write: %q", errwrite)
 		}
 	}
+
+	infraInterfaces, infraVlans, err := utils.GetInfraVlanData()
+	if err == nil {
+		for _, pf := range infraInterfaces {
+			if pf == pfName {
+				for _, vlan := range infraVlans {
+					removeTrunk := fmt.Sprintf("rem %d %d", vlan, vlan)
+					errwrite := ioutil.WriteFile(trunkFile, []byte(removeTrunk), 0644)
+					if errwrite != nil {
+						return fmt.Errorf("f.Write: %q", errwrite)
+					}
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
 //DisableVgtPlus writes "rem <start_vid> <end_vid>"  to trunk file
 func DisableVgtPlus(vlanData []string, pfName string, vfid int) error {
+	trunkFile := fmt.Sprintf(utils.TrunkFileDirectory, pfName, vfid)
 	for _, vlans := range vlanData {
 		removeTrunk := "rem " + vlans
-		trunkFile := fmt.Sprintf(utils.TrunkFileDirectory, pfName, vfid)
-
 		errwrite := ioutil.WriteFile(trunkFile, []byte(removeTrunk), 0644)
 		if errwrite != nil {
 			return fmt.Errorf("f.Write: %q", errwrite)

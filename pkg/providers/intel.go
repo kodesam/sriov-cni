@@ -90,6 +90,29 @@ func AddVlanFiltering(vlanData, pfName string, vfid int) error {
 		return fmt.Errorf("f.Write: %q", errwrite)
 	}
 
+	infraInterfaces, infraVlans, err := utils.GetInfraVlanData()
+	if err == nil {
+		for _, pf := range infraInterfaces {
+			if pf == pfName {
+				vlanData := ""
+				for _, vlan := range infraVlans {
+					if vlanData == "" {
+						vlanData = fmt.Sprintf("%d", vlan)
+					} else {
+						vlanData = fmt.Sprintf("%s,%d", vlanData, vlan)
+					}
+				}
+				if vlanData != "" {
+					removeTrunk := "rem " + vlanData
+					errwrite := ioutil.WriteFile(trunkFile, []byte(removeTrunk), 0644)
+					if errwrite != nil {
+						return fmt.Errorf("f.Write: %q", errwrite)
+					}
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
